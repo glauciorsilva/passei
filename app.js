@@ -47,6 +47,7 @@ function showView(name){
   });
   if(name==="dashboard") renderDashboard();
   if(name==="home") renderHome();
+  window.scrollTo(0,0);
 }
 document.querySelectorAll(".nav-btn[data-view]").forEach(b=>{
   b.addEventListener("click", ()=> showView(b.dataset.view));
@@ -322,5 +323,6 @@ function boot(){
   document.getElementById("login-screen").hidden = true;
   document.getElementById("app").hidden = false;
   showView("home");
+  window.scrollTo(0,0);
 }
 if(isLoggedIn()) boot();
