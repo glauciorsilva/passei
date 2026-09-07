@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Passei — Transpetro Adm. e Controle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="login-screen" class="screen">
+  <div class="login-card">
+    <h1>🎯 Passei</h1>
+    <p class="subtitle">Simulados — Transpetro / Cesgranrio<br>Administração e Controle</p>
+    <form id="login-form">
+      <label>Usuário
+        <input type="text" id="login-user" autocomplete="username" required />
+      </label>
+      <label>Senha
+        <input type="password" id="login-pass" autocomplete="current-password" required />
+      </label>
+      <button type="submit">Entrar</button>
+      <p id="login-error" class="error" hidden>Usuário ou senha incorretos.</p>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="screen" hidden>
+  <header class="topbar">
+    <div class="brand">🎯 Passei</div>
+    <nav>
+      <button data-view="home" class="nav-btn active">Início</button>
+      <button data-view="dashboard" class="nav-btn">Dashboard</button>
+      <button id="logout-btn" class="nav-btn logout">Sair</button>
+    </nav>
+  </header>
+
+  <main id="view-home" class="view">
+    <h2>Escolha o simulado</h2>
+    <p class="muted">Banco de <strong id="total-questoes"></strong> questões <strong>reais</strong>, já aplicadas pela banca Cesgranrio em concursos anteriores (Petrobras, Transpetro, BR Distribuidora, Liquigás, BNDES, Banco do Brasil, IPEA, AgeRio e outros), com fonte identificada em cada questão.</p>
+
+    <div id="subject-grid" class="grid"></div>
+
+    <div class="mix-card">
+      <h3>Simulado geral (mesclado)</h3>
+      <p class="muted">Sorteia questões de todas as matérias, no mesmo padrão da prova.</p>
+      <div class="mix-controls">
+        <label>Quantidade: <input type="number" id="mix-qty" min="5" max="60" value="20" /></label>
+        <button id="mix-start">Iniciar simulado geral</button>
+      </div>
+    </div>
+  </main>
+
+  <main id="view-quiz" class="view" hidden>
+    <div class="quiz-header">
+      <div id="quiz-title"></div>
+      <div class="quiz-meta">
+        <span id="quiz-progress"></span>
+        <span id="quiz-timer">00:00</span>
+      </div>
+    </div>
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+
+    <div id="question-card" class="question-card">
+      <div class="question-tag" id="question-tag"></div>
+      <p id="question-text"></p>
+      <div id="alternatives" class="alternatives"></div>
+      <div id="feedback" class="feedback" hidden>
+        <div id="feedback-status"></div>
+        <div id="feedback-rule"></div>
+        <div id="feedback-source"></div>
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button id="next-btn" disabled>Próxima →</button>
+    </div>
+  </main>
+
+  <main id="view-result" class="view" hidden>
+    <h2>Resultado do simulado</h2>
+    <div id="result-summary" class="result-summary"></div>
+    <div id="result-by-subject" class="result-subjects"></div>
+    <div class="quiz-actions">
+      <button id="result-home-btn">Voltar ao início</button>
+    </div>
+  </main>
+
+  <main id="view-dashboard" class="view" hidden>
+    <h2>Dashboard de desempenho</h2>
+    <p class="muted">Dados salvos neste navegador (localStorage). Use exportar/importar para levar seu histórico para outro dispositivo.</p>
+    <div class="dash-toolbar">
+      <button id="export-btn">Exportar progresso</button>
+      <label class="import-label">Importar progresso
+        <input type="file" id="import-input" accept="application/json" hidden />
+      </label>
+      <button id="reset-btn" class="danger">Zerar histórico</button>
+    </div>
+    <div id="dash-overview" class="dash-overview"></div>
+    <div id="dash-subjects" class="dash-subjects"></div>
+  </main>
+</div>
+
+<script src="data_part1.js"></script>
+<script src="data_part2.js"></script>
+<script src="data_part3.js"></script>
+<script src="data_part4.js"></script>
+<script src="data_part5.js"></script>
+<script src="data_part6.js"></script>
+<script src="data_part7.js"></script>
+<script src="data_part8.js"></script>
+<script src="data_part9.js"></script>
+<script src="data_part10.js"></script>
+<script src="data_part11.js"></script>
+<script src="data_part12.js"></script>
+<script src="data_part13.js"></script>
+<script src="data_part14.js"></script>
+<script src="data_part15.js"></script>
+<script src="data_part16.js"></script>
+<script src="data_part17.js"></script>
+<script src="data_part18.js"></script>
+<script>
+  const QUESTOES = [].concat(
+    QUESTOES_PART1, QUESTOES_PART2, QUESTOES_PART3, QUESTOES_PART4, QUESTOES_PART5,
+    QUESTOES_PART6, QUESTOES_PART7, QUESTOES_PART8, QUESTOES_PART9, QUESTOES_PART10,
+    QUESTOES_PART11, QUESTOES_PART12, QUESTOES_PART13, QUESTOES_PART14, QUESTOES_PART15,
+    QUESTOES_PART16, QUESTOES_PART17, QUESTOES_PART18
+  );
+</script>
+<script src="app.js"></script>
+</body>
+</html>
