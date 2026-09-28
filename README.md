@@ -15,6 +15,9 @@ Site estático com banco de **465 questões reais** (meta: ampliar até 1000), g
 
 Cada questão traz o gabarito oficial, uma explicação da regra/base teórica e a fonte (concurso, cargo, ano) — algumas trazem também o link da questão original.
 
+## Questões inéditas (rotina diária)
+Além das questões reais (`data.js`), o arquivo `data_ia.js` recebe todo dia as questões **inéditas no estilo Cesgranrio** criadas pela rotina "Simulados Transpetro" (Claude, 9h de Brasília). Elas têm `"origem": "ia"`, ids a partir de 10001, aparecem com o selo **Inédita** e podem ser filtradas na tela inicial (Todas / Reais / Inéditas). A rotina faz commit na `main` e a Vercel republica automaticamente — não edite `data_ia.js` à mão.
+
 ## Funcionalidades
 - Login simples (usuário/senha) para acesso pessoal.
 - Simulados por matéria ou "geral" (mesclado, sorteado).

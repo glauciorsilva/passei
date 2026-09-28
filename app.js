@@ -4,7 +4,20 @@ const AUTH_PASS = "Saxtenor1";
 const AUTH_KEY = "passei_auth_v1";
 const HISTORY_KEY = "passei_history_v1";
 
-const MATERIAS = [...new Set(QUESTOES.map(q => q.materia))];
+const FILTRO_KEY = "passei_filtro_origem_v1";
+
+// Banco completo: questões reais (data.js) + inéditas geradas pela rotina diária (data_ia.js)
+const QUESTOES_IA_LISTA = (typeof QUESTOES_IA !== "undefined" ? QUESTOES_IA : [])
+  .map(q => Object.assign({origem: "ia"}, q));
+const BANCO = QUESTOES.map(q => Object.assign({origem: "real"}, q)).concat(QUESTOES_IA_LISTA);
+const MATERIAS = [...new Set(BANCO.map(q => q.materia))];
+
+// Filtro de origem: "todas" | "real" | "ia"
+let filtroOrigem = "todas";
+try{ filtroOrigem = localStorage.getItem(FILTRO_KEY) || "todas"; }catch(e){}
+function questoesAtivas(){
+  return BANCO.filter(q => q.valido && (filtroOrigem === "todas" || q.origem === filtroOrigem));
+}
 
 // ---------- Auth ----------
 function isLoggedIn(){ return localStorage.getItem(AUTH_KEY) === "ok"; }
@@ -55,7 +68,7 @@ document.querySelectorAll(".nav-btn[data-view]").forEach(b=>{
 
 // ---------- Home ----------
 function countBySubject(materia){
-  return QUESTOES.filter(q=>q.materia===materia && q.valido).length;
+  return questoesAtivas().filter(q=>q.materia===materia).length;
 }
 function bestPercentForSubject(materia){
   const h = getHistory().filter(a=>a.materia===materia);
@@ -65,7 +78,16 @@ function bestPercentForSubject(materia){
   return Math.round(100*totalC/totalQ);
 }
 function renderHome(){
-  document.getElementById("total-questoes").textContent = QUESTOES.filter(q=>q.valido).length;
+  const ativas = questoesAtivas();
+  document.getElementById("total-questoes").textContent = ativas.length;
+  const nReais = BANCO.filter(q=>q.valido && q.origem==="real").length;
+  const nIa = BANCO.filter(q=>q.valido && q.origem==="ia").length;
+  document.querySelectorAll("#origem-filter button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.origem===filtroOrigem);
+    const n = b.dataset.origem==="real"? nReais : b.dataset.origem==="ia"? nIa : nReais+nIa;
+    b.querySelector(".n").textContent = n;
+  });
+  const rotulo = filtroOrigem==="real"? "reais" : filtroOrigem==="ia"? "inéditas" : "";
   const grid = document.getElementById("subject-grid");
   grid.innerHTML = "";
   MATERIAS.forEach(m=>{
@@ -75,13 +97,21 @@ function renderHome(){
     card.className = "subject-card";
     card.innerHTML = `
       <h4>${m}</h4>
-      <div class="count">${n} questões reais disponíveis${pct!==null? ` · aproveitamento: <strong>${pct}%</strong>`:''}</div>
+      <div class="count">${n} questões${rotulo? " "+rotulo:""} disponíveis${pct!==null? ` · aproveitamento: <strong>${pct}%</strong>`:''}</div>
       <div class="bar-bg"><div class="bar-fill" style="width:${pct||0}%"></div></div>
     `;
-    card.addEventListener("click", ()=> startQuiz(m, Math.min(10,n)));
+    if(n===0) card.classList.add("empty");
+    else card.addEventListener("click", ()=> startQuiz(m, Math.min(10,n)));
     grid.appendChild(card);
   });
 }
+document.querySelectorAll("#origem-filter button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    filtroOrigem = b.dataset.origem;
+    try{ localStorage.setItem(FILTRO_KEY, filtroOrigem); }catch(e){}
+    renderHome();
+  });
+});
 document.getElementById("mix-start").addEventListener("click", ()=>{
   const qty = parseInt(document.getElementById("mix-qty").value,10) || 20;
   startQuiz(null, qty);
@@ -100,7 +130,7 @@ function shuffle(arr){
 }
 
 function startQuiz(materia, qty){
-  let pool = QUESTOES.filter(q=>q.valido);
+  let pool = questoesAtivas();
   if(materia) pool = pool.filter(q=>q.materia===materia);
   pool = shuffle(pool).slice(0, qty);
   if(pool.length===0){ alert("Não há questões válidas suficientes para esse simulado."); return; }
@@ -133,7 +163,15 @@ function renderQuestion(){
   document.getElementById("quiz-title").textContent = quizState.materia;
   document.getElementById("quiz-progress").textContent = `Questão ${quizState.idx+1} de ${quizState.questions.length}`;
   document.getElementById("progress-fill").style.width = `${100*quizState.idx/quizState.questions.length}%`;
-  document.getElementById("question-tag").textContent = `${q.materia} · ${q.assunto}`;
+  const tag = document.getElementById("question-tag");
+  tag.textContent = `${q.materia} · ${q.assunto}`;
+  if(q.origem==="ia"){
+    const badge = document.createElement("span");
+    badge.className = "badge-ia";
+    badge.textContent = "Inédita";
+    badge.title = "Questão inédita no estilo Cesgranrio, criada pela rotina de simulados diários";
+    tag.appendChild(badge);
+  }
   document.getElementById("question-text").textContent = q.enunciado;
 
   const altsBox = document.getElementById("alternatives");

@@ -38,7 +38,13 @@
 
   <main id="view-home" class="view">
     <h2>Escolha o simulado</h2>
-    <p class="muted">Banco de <strong id="total-questoes"></strong> questões <strong>reais</strong>, já aplicadas pela banca Cesgranrio em concursos anteriores (Petrobras, Transpetro, BR Distribuidora, Liquigás, BNDES, Banco do Brasil, IPEA, AgeRio e outros), com fonte identificada em cada questão.</p>
+    <p class="muted">Banco de <strong id="total-questoes"></strong> questões. As <strong>reais</strong> já foram aplicadas pela banca Cesgranrio em concursos anteriores (Petrobras, Transpetro, BR Distribuidora, Liquigás, BNDES, Banco do Brasil, IPEA, AgeRio e outros), com fonte identificada em cada questão. As <strong>inéditas</strong> são criadas no estilo Cesgranrio pela rotina de simulados diários.</p>
+
+    <div id="origem-filter" class="origem-filter" role="group" aria-label="Origem das questões">
+      <button type="button" data-origem="todas">Todas <span class="n"></span></button>
+      <button type="button" data-origem="real">Reais <span class="n"></span></button>
+      <button type="button" data-origem="ia">Inéditas <span class="n"></span></button>
+    </div>
 
     <div id="subject-grid" class="grid"></div>
 
@@ -103,6 +109,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="data_ia.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
