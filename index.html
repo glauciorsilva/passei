@@ -14,14 +14,14 @@
     <h1>🎯 Passei</h1>
     <p class="subtitle">Simulados — Transpetro / Cesgranrio<br>Administração e Controle</p>
     <form id="login-form">
-      <label>Usuário
-        <input type="text" id="login-user" autocomplete="username" required />
+      <label>E-mail
+        <input type="email" id="login-user" autocomplete="username" required />
       </label>
       <label>Senha
         <input type="password" id="login-pass" autocomplete="current-password" required />
       </label>
       <button type="submit">Entrar</button>
-      <p id="login-error" class="error" hidden>Usuário ou senha incorretos.</p>
+      <p id="login-error" class="error" hidden>E-mail ou senha incorretos.</p>
     </form>
   </div>
 </div>
@@ -46,6 +46,7 @@
       <button type="button" data-origem="ia">Inéditas <span class="n"></span></button>
     </div>
 
+    <p id="load-status" class="muted" hidden></p>
     <div id="subject-grid" class="grid"></div>
 
     <div class="mix-card">
@@ -95,7 +96,7 @@
 
   <main id="view-dashboard" class="view" hidden>
     <h2>Dashboard de desempenho</h2>
-    <p class="muted">Dados salvos neste navegador (localStorage). Use exportar/importar para levar seu histórico para outro dispositivo.</p>
+    <p class="muted">Histórico salvo na sua conta: aparece igual em qualquer dispositivo em que você entrar. Exportar gera uma cópia em JSON; importar envia um arquivo exportado antes para a conta.</p>
     <div class="dash-toolbar">
       <button id="export-btn">Exportar progresso</button>
       <label class="import-label">Importar progresso
@@ -108,8 +109,8 @@
   </main>
 </div>
 
-<script src="data.js"></script>
-<script src="data_ia.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
