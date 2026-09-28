@@ -1,16 +1,13 @@
 // ===== Passei — app.js =====
-const AUTH_USER = "Rafael";
-const AUTH_PASS = "Saxtenor1";
-const AUTH_KEY = "passei_auth_v1";
-const HISTORY_KEY = "passei_history_v1";
-
+// Questões, login e histórico vêm do Supabase (ver supabase/*.sql).
+const sb = supabase.createClient(PASSEI_CONFIG.supabaseUrl, PASSEI_CONFIG.supabaseKey);
 const FILTRO_KEY = "passei_filtro_origem_v1";
+const LEGACY_HISTORY_KEY = "passei_history_v1"; // histórico antigo salvo só no navegador
 
-// Banco completo: questões reais (data.js) + inéditas geradas pela rotina diária (data_ia.js)
-const QUESTOES_IA_LISTA = (typeof QUESTOES_IA !== "undefined" ? QUESTOES_IA : [])
-  .map(q => Object.assign({origem: "ia"}, q));
-const BANCO = QUESTOES.map(q => Object.assign({origem: "real"}, q)).concat(QUESTOES_IA_LISTA);
-const MATERIAS = [...new Set(BANCO.map(q => q.materia))];
+// Banco completo carregado do Supabase: questões reais + inéditas da rotina diária
+let BANCO = [];
+let MATERIAS = [];
+let HISTORY = [];
 
 // Filtro de origem: "todas" | "real" | "ia"
 let filtroOrigem = "todas";
@@ -19,34 +16,97 @@ function questoesAtivas(){
   return BANCO.filter(q => q.valido && (filtroOrigem === "todas" || q.origem === filtroOrigem));
 }
 
-// ---------- Auth ----------
-function isLoggedIn(){ return localStorage.getItem(AUTH_KEY) === "ok"; }
-function login(u,p){
-  if(u.trim().toLowerCase() === AUTH_USER.toLowerCase() && p === AUTH_PASS){
-    localStorage.setItem(AUTH_KEY, "ok");
-    return true;
+function setLoadStatus(msg){
+  const el = document.getElementById("load-status");
+  el.hidden = !msg;
+  el.textContent = msg || "";
+}
+
+async function carregarQuestoes(){
+  const PAGE = 1000;
+  let todas = [];
+  for(let from = 0; ; from += PAGE){
+    const { data, error } = await sb.from("questoes")
+      .select("id,materia,assunto,enunciado,alternativas,correta_index,regra,fonte,fonte_url,valido,origem")
+      .eq("valido", true).order("id").range(from, from + PAGE - 1);
+    if(error) throw error;
+    todas = todas.concat(data);
+    if(data.length < PAGE) break;
   }
-  return false;
+  BANCO = todas.map(q => ({
+    id: q.id, materia: q.materia, assunto: q.assunto, enunciado: q.enunciado,
+    alternativas: q.alternativas, corretaIndex: q.correta_index, regra: q.regra,
+    fonte: q.fonte, fonteUrl: q.fonte_url, valido: q.valido, origem: q.origem
+  }));
+  MATERIAS = [...new Set(BANCO.map(q => q.materia))].sort((a,b)=> a.localeCompare(b, "pt-BR"));
 }
-function logout(){ localStorage.removeItem(AUTH_KEY); location.reload(); }
 
-document.getElementById("login-form").addEventListener("submit", e=>{
+// ---------- Auth ----------
+document.getElementById("login-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const u = document.getElementById("login-user").value;
-  const p = document.getElementById("login-pass").value;
-  if(login(u,p)){ boot(); }
-  else { document.getElementById("login-error").hidden = false; }
+  const email = document.getElementById("login-user").value.trim();
+  const password = document.getElementById("login-pass").value;
+  const btn = e.target.querySelector("button");
+  btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if(error){ document.getElementById("login-error").hidden = false; return; }
+  boot();
 });
-document.getElementById("logout-btn").addEventListener("click", logout);
+document.getElementById("logout-btn").addEventListener("click", async ()=>{
+  await sb.auth.signOut();
+  location.reload();
+});
 
-// ---------- History (localStorage) ----------
-function getHistory(){
-  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }catch(e){ return []; }
+// ---------- History (Supabase) ----------
+function getHistory(){ return HISTORY; }
+
+async function carregarHistorico(){
+  const { data, error } = await sb.from("tentativas")
+    .select("feito_em,materia,total,acertos,tempo_segundos,by_subj")
+    .order("feito_em");
+  if(error) throw error;
+  HISTORY = data.map(a => ({ date: a.feito_em, materia: a.materia, total: a.total,
+    acertos: a.acertos, tempoSegundos: a.tempo_segundos, bySubj: a.by_subj }));
 }
-function saveAttempt(attempt){
-  const h = getHistory();
-  h.push(attempt);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+
+async function saveAttempt(attempt, respostas){
+  HISTORY.push(attempt);
+  const { data, error } = await sb.from("tentativas").insert({
+    feito_em: attempt.date, materia: attempt.materia, filtro_origem: filtroOrigem,
+    total: attempt.total, acertos: attempt.acertos, tempo_segundos: attempt.tempoSegundos,
+    by_subj: attempt.bySubj || {}
+  }).select("id").single();
+  if(error){ alert("Não foi possível salvar o simulado na sua conta: " + error.message); return; }
+  if(respostas && respostas.length){
+    const { error: e2 } = await sb.from("respostas").insert(
+      respostas.map(r => ({ tentativa_id: data.id, questao_id: r.questaoId, alternativa: r.alternativa, correta: r.correct }))
+    );
+    if(e2) console.warn("Falha ao salvar respostas:", e2.message);
+  }
+}
+
+// Envia para a conta um histórico no formato antigo (localStorage ou JSON exportado)
+async function enviarHistoricoLegado(lista){
+  const linhas = lista.filter(a => a && a.total).map(a => ({
+    feito_em: a.date || new Date().toISOString(), materia: a.materia || "Geral (mesclado)",
+    total: a.total, acertos: a.acertos || 0, tempo_segundos: a.tempoSegundos || 0, by_subj: a.bySubj || {}
+  }));
+  if(!linhas.length) return 0;
+  const { error } = await sb.from("tentativas").insert(linhas);
+  if(error) throw error;
+  return linhas.length;
+}
+
+async function migrarHistoricoDoNavegador(){
+  let legado = null;
+  try{ legado = JSON.parse(localStorage.getItem(LEGACY_HISTORY_KEY)); }catch(e){}
+  if(!Array.isArray(legado) || !legado.length) return;
+  try{
+    const n = await enviarHistoricoLegado(legado);
+    localStorage.removeItem(LEGACY_HISTORY_KEY);
+    if(n) console.info(`Histórico antigo migrado para a conta: ${n} simulados.`);
+  }catch(err){ console.warn("Migração do histórico antigo falhou:", err.message); }
 }
 
 // ---------- Navigation ----------
@@ -196,7 +256,7 @@ function answerQuestion(i){
   const isCorrect = i === q.corretaIndex;
   if(!isCorrect) buttons[i].classList.add("wrong");
 
-  quizState.answers.push({correct: isCorrect, materia: q.materia, assunto: q.assunto});
+  quizState.answers.push({correct: isCorrect, materia: q.materia, assunto: q.assunto, questaoId: q.id, alternativa: i});
 
   const fb = document.getElementById("feedback");
   fb.hidden = false;
@@ -239,7 +299,7 @@ function finishQuiz(){
     total, acertos,
     tempoSegundos: totalSec,
     bySubj
-  });
+  }, quizState.answers);
 
   renderResult(acertos, total, totalSec, bySubj);
   showView("result");
@@ -335,32 +395,44 @@ document.getElementById("import-input").addEventListener("change", (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = ()=>{
+  reader.onload = async ()=>{
     try{
       const imported = JSON.parse(reader.result);
       if(!Array.isArray(imported)) throw new Error("formato inválido");
-      const current = getHistory();
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(current.concat(imported)));
+      const n = await enviarHistoricoLegado(imported);
+      await carregarHistorico();
       renderDashboard();
-      alert("Progresso importado com sucesso!");
+      alert(`Progresso importado para a sua conta: ${n} simulados.`);
     }catch(err){
       alert("Arquivo inválido: " + err.message);
     }
   };
   reader.readAsText(file);
 });
-document.getElementById("reset-btn").addEventListener("click", ()=>{
-  if(confirm("Tem certeza que deseja apagar todo o histórico salvo neste navegador?")){
-    localStorage.removeItem(HISTORY_KEY);
+document.getElementById("reset-btn").addEventListener("click", async ()=>{
+  if(confirm("Tem certeza que deseja apagar todo o histórico da sua conta? Isso não pode ser desfeito.")){
+    const { data: { user } } = await sb.auth.getUser();
+    const { error } = await sb.from("tentativas").delete().eq("user_id", user.id);
+    if(error){ alert("Não foi possível apagar: " + error.message); return; }
+    HISTORY = [];
     renderDashboard();
   }
 });
 
 // ---------- Boot ----------
-function boot(){
+async function boot(){
   document.getElementById("login-screen").hidden = true;
   document.getElementById("app").hidden = false;
   showView("home");
+  setLoadStatus("Carregando questões…");
+  try{
+    await migrarHistoricoDoNavegador();
+    await Promise.all([carregarQuestoes(), carregarHistorico()]);
+    setLoadStatus("");
+  }catch(err){
+    setLoadStatus("Não foi possível carregar os dados: " + err.message);
+  }
+  showView("home");
   window.scrollTo(0,0);
 }
-if(isLoggedIn()) boot();
+sb.auth.getSession().then(({ data }) => { if(data.session) boot(); });

@@ -35,5 +35,12 @@ Basta abrir `index.html` num navegador, ou servir a pasta com qualquer servidor 
 npx serve .
 ```
 
-## Observação sobre autenticação
-O login é uma barreira simples no lado do cliente (não é um sistema de autenticação seguro) — adequado para uso pessoal de estudo, não para proteger dados sensíveis.
+## Banco de dados (Supabase)
+Questões, login e histórico ficam no Supabase (projeto `fizyxtirjryozlldxxky`):
+- `supabase/001_schema.sql` — tabelas `questoes`, `tentativas`, `respostas` e regras RLS (questões só para usuários logados; histórico só do próprio usuário).
+- `supabase/002_importar_reais.sql` — importa as questões reais de `data.js` direto do GitHub.
+- A rotina diária grava as questões inéditas direto na tabela `questoes` (`origem = 'ia'`, ids a partir de 10001).
+- `config.js` guarda a URL e a chave *publishable* (pública por natureza; a proteção vem do RLS).
+- O login usa Supabase Auth (e-mail e senha). O histórico antigo salvo no navegador é enviado para a conta automaticamente no primeiro login.
+
+`data.js` e `data_ia.js` ficam no repositório como fonte/backup, mas o site não os carrega mais.
