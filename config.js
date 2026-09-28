@@ -2,5 +2,5 @@
 // quem protege os dados são as regras RLS do banco).
 window.PASSEI_CONFIG = {
   supabaseUrl: "https://fizyxtirjryozlldxxky.supabase.co",
-  supabaseKey: "__SUPABASE_PUBLISHABLE_KEY__"
+  supabaseKey: "sb_publishable_2r5rKTb_egWcRKC6c76m2A_O15ZcbHZ"
 };
