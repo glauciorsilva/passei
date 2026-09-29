@@ -30,6 +30,7 @@
   <header class="topbar">
     <div class="brand">🎯 Passei</div>
     <nav>
+      <button type="button" id="foco-chip" class="foco-chip" hidden><span class="dot"></span><span id="foco-chip-texto">Foco 25:00</span></button>
       <button data-view="home" class="nav-btn active">Início</button>
       <button data-view="dashboard" class="nav-btn">Dashboard</button>
       <button id="logout-btn" class="nav-btn logout">Sair</button>
@@ -44,6 +45,16 @@
       <button type="button" data-origem="todas">Todas <span class="n"></span></button>
       <button type="button" data-origem="real">Reais <span class="n"></span></button>
       <button type="button" data-origem="ia">Inéditas <span class="n"></span></button>
+    </div>
+
+    <div class="ritmo-card">
+      <h3>Ritmo de estudo</h3>
+      <p class="muted">Um alerta aparece na tela quando é hora da pausa, e o cronômetro do simulado para enquanto você descansa. Clique no relógio do topo para parar ou retomar.</p>
+      <div id="ritmo-opcoes" class="ritmo-opcoes" role="group" aria-label="Método de pausas">
+        <button type="button" data-metodo="pomodoro">Pomodoro 25/5</button>
+        <button type="button" data-metodo="blocos">Blocos 50/10</button>
+        <button type="button" data-metodo="off">Sem alertas</button>
+      </div>
     </div>
 
     <p id="load-status" class="muted" hidden></p>
@@ -111,6 +122,20 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<div id="pausa-overlay" class="pausa-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="pausa-titulo">
+  <div class="pausa-box">
+    <h2 id="pausa-titulo">Hora da pausa</h2>
+    <p id="pausa-texto" class="muted"></p>
+    <div id="pausa-relogio" class="relogio">05:00</div>
+    <ul id="pausa-dicas"></ul>
+    <div class="acoes">
+      <button type="button" id="pausa-btn-1" class="primario">Começar pausa</button>
+      <button type="button" id="pausa-btn-2">Mais 5 min de foco</button>
+    </div>
+  </div>
+</div>
+
+<script src="pausas.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

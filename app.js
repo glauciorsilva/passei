@@ -201,6 +201,9 @@ function startQuiz(materia, qty){
     idx: 0,
     answers: [], // {correct: bool, materia, assunto}
     startTime: Date.now(),
+    pausadoMs: 0,                 // tempo total em pausas (não conta no simulado)
+    pausaDesde: window.PasseiPausas && PasseiPausas.emPausa() ? Date.now() : null,
+    finalizado: false,
     timerInterval: null
   };
   showView("quiz");
@@ -208,10 +211,26 @@ function startQuiz(materia, qty){
   renderQuestion();
 }
 
+// Tempo de simulado descontando as pausas
+function tempoDeQuizMs(){
+  const agora = Date.now();
+  const pausaAtual = quizState.pausaDesde ? agora - quizState.pausaDesde : 0;
+  return agora - quizState.startTime - quizState.pausadoMs - pausaAtual;
+}
+document.addEventListener("passei:pausa-inicio", ()=>{
+  if(quizState && !quizState.finalizado && !quizState.pausaDesde) quizState.pausaDesde = Date.now();
+});
+document.addEventListener("passei:pausa-fim", ()=>{
+  if(quizState && quizState.pausaDesde){
+    quizState.pausadoMs += Date.now() - quizState.pausaDesde;
+    quizState.pausaDesde = null;
+  }
+});
+
 function startTimer(){
   clearInterval(quizState.timerInterval);
   quizState.timerInterval = setInterval(()=>{
-    const s = Math.floor((Date.now()-quizState.startTime)/1000);
+    const s = Math.floor(tempoDeQuizMs()/1000);
     const mm = String(Math.floor(s/60)).padStart(2,"0");
     const ss = String(s%60).padStart(2,"0");
     document.getElementById("quiz-timer").textContent = `${mm}:${ss}`;
@@ -281,7 +300,8 @@ document.getElementById("next-btn").addEventListener("click", ()=>{
 
 function finishQuiz(){
   clearInterval(quizState.timerInterval);
-  const totalSec = Math.floor((Date.now()-quizState.startTime)/1000);
+  const totalSec = Math.floor(tempoDeQuizMs()/1000);
+  quizState.finalizado = true;
   const acertos = quizState.answers.filter(a=>a.correct).length;
   const total = quizState.answers.length;
 
@@ -322,7 +342,7 @@ function renderResult(acertos, total, totalSec, bySubj){
     const row = document.createElement("div");
     row.className = "subj-row";
     row.innerHTML = `<div class="name">${materia}</div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${p>=90?'#22c55e':p>=70?'#38bdf8':'#ef4444'}"></div></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${p>=90?'var(--ok)':p>=70?'var(--accent)':'var(--danger)'}"></div></div>
       <div class="pct">${st.acertos}/${st.total}</div>`;
     box.appendChild(row);
   });
@@ -363,7 +383,7 @@ function renderDashboard(){
   const sorted = Object.entries(agg).sort((a,b)=> (a[1].total? (a[1].acertos/a[1].total):1) - (b[1].total? (b[1].acertos/b[1].total):1));
   sorted.forEach(([materia, st])=>{
     const pct = st.total? Math.round(100*st.acertos/st.total) : null;
-    const color = pct===null? '#94a3b8' : pct>=90?'#22c55e':pct>=70?'#38bdf8':'#ef4444';
+    const color = pct===null? 'var(--muted)' : pct>=90?'var(--ok)':pct>=70?'var(--accent)':'var(--danger)';
     const row = document.createElement("div");
     row.className = "dash-row";
     row.innerHTML = `
@@ -424,6 +444,7 @@ async function boot(){
   document.getElementById("login-screen").hidden = true;
   document.getElementById("app").hidden = false;
   showView("home");
+  PasseiPausas.iniciar();
   setLoadStatus("Carregando questões…");
   try{
     await migrarHistoricoDoNavegador();
