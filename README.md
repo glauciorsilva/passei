@@ -25,6 +25,12 @@ Além das questões reais (`data.js`), o arquivo `data_ia.js` recebe todo dia as
 - Dashboard de desempenho por matéria, com histórico acumulado salvo no navegador (localStorage).
 - Exportar/Importar progresso em JSON, para levar o histórico entre dispositivos/navegadores.
 
+## Meta semanal e ritmo de estudo
+- Nova aba **Meta semanal** com checklist das ações prioritárias e da rotina de Dados definida no Notion.
+- Cada marcação é mantida no navegador para uso offline e sincronizada na conta quando houver conexão.
+- Três ciclos guiados: Ritmo leve (25/5), Bloco profundo (50/10) e Case concentrado (45/10). O cronômetro muda automaticamente entre foco e descanso.
+- Para ativar a sincronização no Supabase, execute `supabase/003_metas_semanais.sql` no projeto existente. Ele cria as tabelas próprias de planos e metas, índices, RLS e permissões para o usuário autenticado.
+
 ## Stack
 Site 100% estático (HTML + CSS + JS puro, sem build), pronto para deploy na Vercel.
 
