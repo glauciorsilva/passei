@@ -31,6 +31,13 @@ Além das questões reais (`data.js`), o arquivo `data_ia.js` recebe todo dia as
 - Três ciclos guiados: Ritmo leve (25/5), Bloco profundo (50/10) e Case concentrado (45/10). O cronômetro muda automaticamente entre foco e descanso.
 - Para ativar a sincronização no Supabase, execute `supabase/003_metas_semanais.sql` no projeto existente. Ele cria as tabelas próprias de planos e metas, índices, RLS e permissões para o usuário autenticado.
 
+## Plano de estudo (blocos com trava de 90%)
+- Aba **Plano de estudo**: escolha uma matéria ou o modo **Misturado** (distribui as questões entre as matérias).
+- Cada bloco tem **10 questões**. Um bloco novo, com questões nunca vistas no plano, só é liberado com **90% (9/10)**; abaixo disso o mesmo bloco volta, em outra ordem.
+- Depois de responder, cada alternativa ganha uma aba **Justificativa** ("por que está certa / errada"), salva automaticamente e reaparece sempre que a questão voltar.
+- A cada **30 questões** respondidas no plano entra a **Revisão de fixação**: 10 questões misturando tudo o que já foi feito, com prioridade para as erradas.
+- Para sincronizar estado e justificativas na conta, execute `supabase/004_plano_estudo.sql`. Sem a migração, tudo funciona salvo no navegador.
+
 ## Stack
 Site 100% estático (HTML + CSS + JS puro, sem build), pronto para deploy na Vercel.
 
