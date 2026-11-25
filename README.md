@@ -68,3 +68,8 @@ Menu **Flashcards**: 340 cartões (um conceito por cartão, com a regra cobrada 
 - Errou: o cartão vai para *Revisar* e só volta a *Sei* depois de dois acertos seguidos.
 - Progresso salvo no navegador, por usuário (`passei_flash_v1_<userId>`).
 - Cartões em `flashcards_data.js`; módulo em `flashcards.js`.
+
+
+## Riscar alternativa
+
+Em qualquer tela de questões, arrastar uma alternativa para o lado (dedo ou mouse) a risca com uma linha vermelha no meio, para marcar as que você já descartou. Arrastar de novo desfaz. O gesto não responde a questão. Módulo em `riscar.js`.
