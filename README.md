@@ -64,6 +64,7 @@ Questões, login e histórico ficam no Supabase (projeto `fizyxtirjryozlldxxky`)
 Menu **Flashcards**: 340 cartões (um conceito por cartão, com a regra cobrada pela Cesgranrio no verso), separados pelas 10 matérias do edital.
 
 - Filtros: matéria (ou todas), quais cartões (pendentes, só os errados, novos, todos) e sentido (termo → definição, definição → termo ou misturado).
+- Rodadas de 10 cartões (revisar primeiro, depois novos); ao fim, "Próximos 10".
 - Errou: o cartão vai para *Revisar* e só volta a *Sei* depois de dois acertos seguidos.
 - Progresso salvo no navegador, por usuário (`passei_flash_v1_<userId>`).
 - Cartões em `flashcards_data.js`; módulo em `flashcards.js`.
