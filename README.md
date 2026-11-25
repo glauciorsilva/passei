@@ -57,3 +57,13 @@ Questões, login e histórico ficam no Supabase (projeto `fizyxtirjryozlldxxky`)
 - O login usa Supabase Auth (e-mail e senha). O histórico antigo salvo no navegador é enviado para a conta automaticamente no primeiro login.
 
 `data.js` e `data_ia.js` ficam no repositório como fonte/backup, mas o site não os carrega mais.
+
+
+## Flashcards de conceitos
+
+Menu **Flashcards**: 340 cartões (um conceito por cartão, com a regra cobrada pela Cesgranrio no verso), separados pelas 10 matérias do edital.
+
+- Filtros: matéria (ou todas), quais cartões (pendentes, só os errados, novos, todos) e sentido (termo → definição, definição → termo ou misturado).
+- Errou: o cartão vai para *Revisar* e só volta a *Sei* depois de dois acertos seguidos.
+- Progresso salvo no navegador, por usuário (`passei_flash_v1_<userId>`).
+- Cartões em `flashcards_data.js`; módulo em `flashcards.js`.
