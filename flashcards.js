@@ -1,6 +1,7 @@
 // ===== Passei — Flashcards de conceitos =====
 // Frente: o conceito. Verso: a regra/definição cobrada pela Cesgranrio.
 // Escolha matéria, quais cartões (pendentes, só os errados, novos, todos) e o sentido (termo→definição, definição→termo ou misturado).
+// Cada rodada tem no máximo 10 cartões: primeiro os que estão em revisão, depois os novos, depois os já sabidos.
 // Cartão errado vai para "Revisar" e só volta a "Sei" depois de dois acertos seguidos.
 // O progresso fica no navegador, separado por usuário.
 (function(){
@@ -16,6 +17,7 @@
 
   const CARDS = FLASHCARDS.map(c=> ({ ...c, id: c.m + "#" + c.t }));
   const MATERIAS = [...new Set(CARDS.map(c=> c.m))];
+  const RODADA = 10;
 
   // ---------- Estilo ----------
   const style = document.createElement("style");
@@ -117,15 +119,21 @@
         <p class="fc-leg"><span style="background:var(--ok)"></span>Sei<span style="background:var(--danger)"></span>Revisar<span style="background:var(--border)"></span>Não visto</p>
         <button class="fc-btn sec" id="fc-zerar">Zerar progresso</button>
       </div>`);
-    const info = ()=>{ const n = filtrar().length; view.querySelector("#fc-info").textContent = n ? n + " cartões nesta rodada." : "Nenhum cartão com esse filtro. Escolha outra opção."; view.querySelector("#fc-go").disabled = !n; };
+    const info = ()=>{ const n = filtrar().length; view.querySelector("#fc-info").textContent = n ? n + " cartões disponíveis com esse filtro. Você estuda " + Math.min(RODADA, n) + " por rodada." : "Nenhum cartão com esse filtro. Escolha outra opção."; view.querySelector("#fc-go").disabled = !n; };
     [["fc-mat","mat"],["fc-quais","quais"],["fc-dir","dir"]].forEach(([id,k])=> view.querySelector("#"+id).addEventListener("change", e=>{ pref[k] = e.target.value; salvarPref(); info(); }));
-    view.querySelector("#fc-go").addEventListener("click", ()=>{ const l = filtrar(); if(l.length) iniciar(l); });
+    view.querySelector("#fc-go").addEventListener("click", proximaRodada);
     let conf = false; const bz = view.querySelector("#fc-zerar");
     bz.addEventListener("click", ()=>{ if(!conf){ conf = true; bz.textContent = "Toque de novo para confirmar"; setTimeout(()=>{ conf = false; bz.textContent = "Zerar progresso"; }, 4000); return; } P = {}; salvar(); telaInicio(); });
     info();
   }
 
   // ---------- Sessão ----------
+  // Monta uma rodada de até 10: revisar primeiro, depois novos, depois os já sabidos (cada grupo embaralhado).
+  function escolherRodada(){
+    const l = filtrar(), ordem = { rev:0, novo:1, sei:2 };
+    return embaralhar(l).sort((a, b)=> ordem[st(a)] - ordem[st(b)]).slice(0, RODADA);
+  }
+  function proximaRodada(){ const l = escolherRodada(); if(l.length) iniciar(l); else telaInicio(); }
   let fila = [], i = 0, virado = false, acertos = 0, errados = [];
   function iniciar(lista){
     fila = embaralhar(lista).map(c=> ({ c, inv: pref.dir === "dt" || (pref.dir === "mix" && Math.random() < .5) }));
@@ -172,16 +180,19 @@
     if(i < fila.length) mostrar(); else fim();
   }
   function fim(){
+    const restantes = filtrar().length;
     const pct = Math.round(acertos / fila.length * 100);
     pintar(view, html`
       <div class="fc-painel fc-fim">
         <p class="muted">Rodada concluída</p>
         <div class="pct">${pct}%</div>
         <h3>${acertos} de ${fila.length} acertos</h3>
-        <p class="muted">${errados.length ? errados.length + " cartões foram para a pilha de revisão. Um cartão errado só sai dela depois de dois acertos seguidos." : "Nenhum erro nesta rodada."}</p>
-        <div class="fc-acoes">${errados.length ? html`<button class="fc-btn" id="fc-ref">Refazer os que errei</button>` : ""}<button class="fc-btn sec" id="fc-volta">Voltar ao início</button></div>
+        <p class="muted">${errados.length ? (errados.length === 1 ? "1 cartão foi" : errados.length + " cartões foram") + " para a pilha de revisão. Um cartão errado só sai dela depois de dois acertos seguidos." : "Nenhum erro nesta rodada."}</p>
+        <div class="fc-acoes">${errados.length ? html`<button class="fc-btn" id="fc-ref">Refazer os que errei</button>` : ""}${restantes ? html`<button class="fc-btn${errados.length ? new Seguro(" sec") : ""}" id="fc-prox">${restantes === 1 ? "Próximo cartão" : "Próximos " + Math.min(RODADA, restantes)}</button>` : ""}<button class="fc-btn sec" id="fc-volta">Voltar ao início</button></div>
+        <p class="muted" style="font-size:13px;margin-top:12px">${restantes ? (restantes === 1 ? "1 cartão ainda disponível" : restantes + " cartões ainda disponíveis") + " com esse filtro." : "Você passou por todos os cartões desse filtro."}</p>
       </div>`);
     const ref = view.querySelector("#fc-ref"); if(ref) ref.addEventListener("click", ()=> iniciar(errados.slice()));
+    const prox = view.querySelector("#fc-prox"); if(prox) prox.addEventListener("click", proximaRodada);
     view.querySelector("#fc-volta").addEventListener("click", telaInicio);
   }
   document.addEventListener("keydown", e=>{
